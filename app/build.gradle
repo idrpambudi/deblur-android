@@ -20,6 +20,8 @@ android {
         noCompress "pb"
         noCompress "tflite"
         noCompress "lite"
+        noCompress "png"
+        noCompress "jpg"
     }
 }
 
@@ -29,7 +31,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'com.jakewharton:butterknife:8.8.1'
 
-    implementation 'org.tensorflow:tensorflow-lite:1.13.1'
+    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-android:+'
 
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'

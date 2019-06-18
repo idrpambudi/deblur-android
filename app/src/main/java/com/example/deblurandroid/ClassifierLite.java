@@ -22,24 +22,26 @@ import java.util.Arrays;
 public class ClassifierLite {
     private static final String LOG_TAG = ClassifierLite.class.getSimpleName();
 
-    private static final String MODEL_NAME = "deblur-dw-4000.tflite";
+    private static final String MODEL_NAME = "quant.tflite";
 //    private static final String MODEL_NAME = "mnist.tflite";
 
     private static final int BATCH_SIZE = 1;
     public static final int IMG_HEIGHT = 720;
     public static final int IMG_WIDTH = 1280;
     private static final int NUM_CHANNEL = 3;
-    private static final boolean IS_QUANTIZED = false;
+    private static final boolean IS_QUANTIZED = true;
 
     private final Interpreter.Options options = new Interpreter.Options();
     private final Interpreter mInterpreter;
     private final ByteBuffer mImageData;
     private final int[] mImagePixels = new int[IMG_HEIGHT * IMG_WIDTH];
-    private final float[][][][] mResult = new float[1][IMG_HEIGHT][IMG_WIDTH][NUM_CHANNEL];
+    private final float[][][][] resultFloat = new float[1][IMG_HEIGHT][IMG_WIDTH][NUM_CHANNEL];
+    private final byte[][][][] resultByte = new byte[1][IMG_HEIGHT][IMG_WIDTH][NUM_CHANNEL];
 
     private static int numBytesPerChannel;
 
     public ClassifierLite(Activity activity) throws IOException {
+        options.setUseNNAPI(true);
         mInterpreter = new Interpreter(loadModelFile(activity), options);
         System.out.println("done creating interpreter");
         if(IS_QUANTIZED){
@@ -56,12 +58,25 @@ public class ClassifierLite {
     public Result deblur(Bitmap bitmap) {
         convertBitmapToByteBuffer(bitmap);
         long startTime = SystemClock.uptimeMillis();
-        mInterpreter.run(mImageData, mResult);
+        if(IS_QUANTIZED){
+            mInterpreter.run(mImageData, resultByte);
+        }
+        else{
+            mInterpreter.run(mImageData, resultFloat);
+        }
         long endTime = SystemClock.uptimeMillis();
         long timeCost = endTime - startTime;
-        Log.v(LOG_TAG, "classify(): result = " + Arrays.toString(mResult[0])
-                + ", timeCost = " + timeCost);
-        return new Result(mResult[0], timeCost);
+
+        if(IS_QUANTIZED){
+            Log.v(LOG_TAG, "classify(): result = " + Arrays.toString(resultByte[0])
+                    + ", timeCost = " + timeCost);
+            return new Result(resultByte[0], timeCost);
+        }
+        else{
+            Log.v(LOG_TAG, "classify(): result = " + Arrays.toString(resultFloat[0])
+                    + ", timeCost = " + timeCost);
+            return new Result(resultFloat[0], timeCost);
+        }
     }
 
     private MappedByteBuffer loadModelFile(Activity activity) throws IOException {
@@ -106,45 +121,69 @@ public class ClassifierLite {
         }
     }
 
-}
 
-class Result {
+    class Result {
 
-    private final long mTimeCost;
-    private final int imgHeight;
-    private final int imgWidth;
-    private final Bitmap deblurImg;
-    private int[] colors;
+        private final long mTimeCost;
+        private final int imgHeight;
+        private final int imgWidth;
+        private final Bitmap deblurImg;
+        private int[] colors;
 
-    @TargetApi(Build.VERSION_CODES.O)
-    public Result(float[][][] deblurResult, long timeCost) {
-        imgHeight = deblurResult.length;
-        imgWidth = deblurResult[0].length;
-        colors = new int[imgHeight * imgWidth];
+        @TargetApi(Build.VERSION_CODES.O)
+        public Result(float[][][] deblurResult, long timeCost) {
+            imgHeight = deblurResult.length;
+            imgWidth = deblurResult[0].length;
+            colors = new int[imgHeight * imgWidth];
 
-        int colorsIndex = 0;
-        for(int i = 0; i < imgWidth; i++){
-            for(int j = 0; j < imgHeight; j++){
-                float red = deblurResult[i][j][0];
-                float green = deblurResult[i][j][1];
-                float blue = deblurResult[i][j][2];
+            int colorsIndex = 0;
+            for(int i = 0; i < imgWidth; i++){
+                for(int j = 0; j < imgHeight; j++){
+                    float red = deblurResult[i][j][0];
+                    float green = deblurResult[i][j][1];
+                    float blue = deblurResult[i][j][2];
 
-                int pixelValue = Color.rgb(red,green,blue);
-                colors[colorsIndex] = pixelValue;
-                colorsIndex++;
+                    int pixelValue = Color.rgb(red,green,blue);
+                    colors[colorsIndex] = pixelValue;
+                    colorsIndex++;
+                }
             }
+            mTimeCost = timeCost;
+
+            deblurImg = Bitmap.createBitmap(colors, imgWidth, imgHeight, Bitmap.Config.ARGB_8888);
         }
-        mTimeCost = timeCost;
 
-        deblurImg = Bitmap.createBitmap(colors, imgWidth, imgHeight, Bitmap.Config.ARGB_8888);
-    }
+        @TargetApi(Build.VERSION_CODES.O)
+        public Result(byte[][][] deblurResult, long timeCost) {
+            imgHeight = deblurResult.length;
+            imgWidth = deblurResult[0].length;
+            colors = new int[imgHeight * imgWidth];
 
-    public Bitmap getDeblurResult() {
-        return deblurImg;
-    }
+            int colorsIndex = 0;
+            for(int i = 0; i < imgWidth; i++){
+                for(int j = 0; j < imgHeight; j++){
+                    byte red = deblurResult[i][j][0];
+                    byte green = deblurResult[i][j][1];
+                    byte blue = deblurResult[i][j][2];
 
-    public long getTimeCost() {
-        return mTimeCost;
+                    int pixelValue = (red & 0xff) << 16 | (green & 0xff) << 8 | (blue & 0xff);
+                    colors[colorsIndex] = pixelValue;
+                    colorsIndex++;
+                }
+            }
+            mTimeCost = timeCost;
+
+            deblurImg = Bitmap.createBitmap(colors, imgWidth, imgHeight, Bitmap.Config.ARGB_8888);
+        }
+
+        public Bitmap getDeblurResult() {
+            return deblurImg;
+        }
+
+        public long getTimeCost() {
+            return mTimeCost;
+        }
+
     }
 
 }

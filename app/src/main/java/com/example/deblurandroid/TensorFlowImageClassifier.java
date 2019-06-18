@@ -42,8 +42,10 @@ public class TensorFlowImageClassifier implements Classifier{
   private static final int NUM_CHANNEL = 3;
   private static final boolean IS_QUANTIZED = false;
   private static final String INPUT_NAME = "Placeholder" ;
-  private static final String OUTPUT_NAME = "g_net/dec1_0_2/BiasAdd";
-  private static final String MODEL_FILE_NAME = "deblur-dw-59000-frozen.pb";
+//  private static final String OUTPUT_NAME = "g_net/dec1_0_2/BiasAdd";
+  private static final String OUTPUT_NAME = "g_net/dec0_1/BiasAdd";
+//  private static final String MODEL_FILE_NAME = "deblur-dw-59000-frozen-quant.pb";
+  private static final String MODEL_FILE_NAME = "dw-shared-4000.pb";
 
   // Config values.
   private String inputName;

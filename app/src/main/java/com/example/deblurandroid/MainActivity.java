@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
         }
         Bitmap image = adapter.bmArray[0];
         Classifier.Result result = classifier.deblur(image);
+//        ClassifierLite.Result result = mClassifier.deblur(image);
         adapter.bmArray[1] = result.getDeblurResult();
         mTvTimeCost.setText(String.format(getString(R.string.timecost_value), result.getTimeCost()));
         adapter.notifyDataSetChanged();
