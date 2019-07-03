@@ -71,8 +71,7 @@ public class MainActivity extends AppCompatActivity {
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
 
         startActivityForResult(galleryIntent, PICK_IMAGE);
-        adapter.bmArray[0] = galleryBitmap;
-        adapter.notifyDataSetChanged();
+        Log.e(LOG_TAG, "searched");
     }
 
     @Override
@@ -82,6 +81,10 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Uri imageUri = data.getData();
                 galleryBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                adapter.bmArray[0] = galleryBitmap;
+                adapter.notifyDataSetChanged();
+                viewPager.setCurrentItem(0);
+                mTvTimeCost.setText(getString(R.string.empty));
             } catch (IOException e) {
                 e.printStackTrace();
             }

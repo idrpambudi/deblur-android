@@ -4,7 +4,7 @@
     <string name="prediction">Prediction</string>
     <string name="probability">Probability</string>
     <string name="timecost">Timecost</string>
-    <string name="timecost_value">%1$d ms</string>
+    <string name="timecost_value">%1$dms</string>
     <string name="empty">--</string>
     <string name="detect">Detect</string>
     <string name="search">Search</string>

@@ -138,9 +138,9 @@ public class TensorFlowImageClassifier implements Classifier{
   private int[] convertImageFloatToInt(float[] floatArray){
     int[] intArray = new int[floatArray.length / 3];
     for (int i = 0; i < intArray.length; ++i) {
-      float r = floatArray[i * 3 + 0];
-      float g = floatArray[i * 3 + 1];
-      float b = floatArray[i * 3 + 2];
+      float r = Math.min(1,Math.max(0, floatArray[i * 3 + 0]));
+      float g = Math.min(1,Math.max(0, floatArray[i * 3 + 1]));
+      float b = Math.min(1,Math.max(0, floatArray[i * 3 + 2]));
       int pixelValue = Color.rgb(r, g, b);
       intArray[i] = pixelValue;
     }
